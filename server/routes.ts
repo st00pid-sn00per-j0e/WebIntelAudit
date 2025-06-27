@@ -88,9 +88,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create scan session
       const session = await storage.createScanSession(validatedUrl);
 
-      // Start the Python analyzer process
-      const pythonScript = path.join(process.cwd(), 'server', 'services', 'analyzer.py');
-      console.log(`Starting Python analysis for session ${session.id}: ${pythonScript}`);
+      // Start the Python enhanced analyzer process
+      const pythonScript = path.join(process.cwd(), 'server', 'services', 'enhanced_analyzer.py');
+      console.log(`Starting enhanced analysis for session ${session.id}: ${pythonScript}`);
       console.log(`Command: python3 ${pythonScript} ${url} ${session.id} '${JSON.stringify(validatedOptions)}'`);
       
       const analysisProcess = spawn('python3', [
@@ -125,6 +125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 completedAt: new Date()
               });
               broadcastUpdate(session.id, { type: 'result', data: update.data });
+            } else if (update.type === 'browserAction') {
+              broadcastUpdate(session.id, { type: 'browserAction', data: update.data });
+            } else if (update.type === 'screenshot') {
+              broadcastUpdate(session.id, { type: 'screenshot', data: update.data });
             }
           }
         } catch (error) {

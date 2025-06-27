@@ -2,13 +2,15 @@ import { useEffect, useState, useRef } from "react";
 import type { LogEntry } from "@shared/schema";
 
 interface WebSocketMessage {
-  type: 'log' | 'progress' | 'result' | 'status' | 'subscribed';
+  type: 'log' | 'progress' | 'result' | 'status' | 'subscribed' | 'browserAction' | 'screenshot';
   data: any;
 }
 
 export default function useWebSocket(scanId: number) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [browserAction, setBrowserAction] = useState<string>("");
+  const [screenshot, setScreenshot] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
@@ -62,6 +64,14 @@ export default function useWebSocket(scanId: number) {
             case 'status':
               console.log(`Status update for scan ${scanId}:`, message.data);
               break;
+            case 'browserAction':
+              console.log(`Browser action for scan ${scanId}:`, message.data.action);
+              setBrowserAction(message.data.action);
+              break;
+            case 'screenshot':
+              console.log(`Screenshot received for scan ${scanId}`);
+              setScreenshot(message.data.image);
+              break;
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
@@ -107,6 +117,8 @@ export default function useWebSocket(scanId: number) {
 
   return {
     logs,
-    isConnected
+    isConnected,
+    browserAction,
+    screenshot
   };
 }

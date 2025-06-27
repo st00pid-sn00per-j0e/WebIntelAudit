@@ -103,6 +103,12 @@ Changelog:
   * NLP-powered content analysis and architecture detection
   * Modern React frontend with dark theme
   * Comprehensive vulnerability reporting with export functionality
+- June 27, 2025. Fixed Selenium integration and enhanced live browser session:
+  * Created enhanced analyzer with simulated browser screenshots
+  * Real-time browser action updates in live session window
+  * Fixed duplicate analysis progress display
+  * Improved browser viewport simulation with actual screenshot rendering
+  * WebSocket integration for live browser activity streaming
 ```
 
 ## User Preferences

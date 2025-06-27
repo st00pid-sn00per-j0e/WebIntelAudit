@@ -13,35 +13,29 @@ interface LiveBrowserSessionProps {
 export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) {
   const [browserActions, setBrowserActions] = useState<string[]>([]);
   const [currentAction, setCurrentAction] = useState<string>("");
+  const [currentScreenshot, setCurrentScreenshot] = useState<string | null>(null);
   
   const { data: scanSession } = useQuery<ScanSession>({
     queryKey: ['/api/scans', scanId],
     refetchInterval: 200,
   });
 
-  const { logs, isConnected } = useWebSocket(scanId);
+  const { logs, isConnected, browserAction, screenshot } = useWebSocket(scanId);
 
-  // Simulate browser actions based on scan progress
+  // Update browser actions from WebSocket
   useEffect(() => {
-    if (!scanSession) return;
-    
-    const progress = scanSession.progress || 0;
-    const actions = [];
-    
-    if (progress >= 10) actions.push("Opening browser instance");
-    if (progress >= 20) actions.push("Navigating to target URL");
-    if (progress >= 30) actions.push("Loading page resources");
-    if (progress >= 40) actions.push("Analyzing DOM structure");
-    if (progress >= 50) actions.push("Checking security headers");
-    if (progress >= 60) actions.push("Testing for vulnerabilities");
-    if (progress >= 70) actions.push("Running performance tests");
-    if (progress >= 80) actions.push("Extracting content data");
-    if (progress >= 90) actions.push("Generating analysis report");
-    if (progress >= 100) actions.push("Browser session completed");
-    
-    setBrowserActions(actions);
-    setCurrentAction(actions[actions.length - 1] || "Initializing...");
-  }, [scanSession?.progress]);
+    if (browserAction) {
+      setBrowserActions(prev => [...prev, browserAction]);
+      setCurrentAction(browserAction);
+    }
+  }, [browserAction]);
+
+  // Update screenshot from WebSocket
+  useEffect(() => {
+    if (screenshot) {
+      setCurrentScreenshot(screenshot);
+    }
+  }, [screenshot]);
 
   const getSessionStatus = () => {
     if (!scanSession) return "initializing";
@@ -92,21 +86,27 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
           </div>
           <div className="relative bg-white h-96 overflow-hidden">
             {scanSession?.status === 'running' ? (
-              <div className="absolute inset-0 bg-slate-50">
-                {/* Simulated Website Content */}
-                <div className="p-4 space-y-4">
-                  <div className="bg-slate-200 h-12 rounded animate-pulse"></div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
-                    <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
-                    <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+              <div className="absolute inset-0">
+                {currentScreenshot ? (
+                  // Show real screenshot from Selenium
+                  <img 
+                    src={`data:image/png;base64,${currentScreenshot}`} 
+                    alt="Live browser view" 
+                    className="w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  // Fallback loading state
+                  <div className="absolute inset-0 bg-slate-50">
+                    <div className="p-4 space-y-4">
+                      <div className="bg-slate-200 h-12 rounded animate-pulse"></div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                        <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                        <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="bg-slate-200 h-4 w-full rounded animate-pulse"></div>
-                    <div className="bg-slate-200 h-4 w-3/4 rounded animate-pulse"></div>
-                    <div className="bg-slate-200 h-4 w-5/6 rounded animate-pulse"></div>
-                  </div>
-                </div>
+                )}
                 {/* Scanning Overlay */}
                 <div className="absolute inset-0 bg-blue-500/5 pointer-events-none">
                   <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 animate-scan"></div>
@@ -114,7 +114,7 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
                 {/* Status Indicator */}
                 <div className="absolute bottom-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full text-xs flex items-center gap-2">
                   <Activity className="h-3 w-3 animate-pulse" />
-                  Analyzing Page...
+                  {currentAction || "Analyzing Page..."}
                 </div>
               </div>
             ) : scanSession?.status === 'completed' ? (
