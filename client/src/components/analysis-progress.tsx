@@ -12,11 +12,36 @@ interface AnalysisProgressProps {
 export default function AnalysisProgress({ scanId }: AnalysisProgressProps) {
   const { data: scanSession } = useQuery<ScanSession>({
     queryKey: ['/api/scans', scanId],
-    refetchInterval: 500,
+    refetchInterval: 200, // Fast polling for real-time updates
   });
 
-  // Subscribe to WebSocket updates for real-time progress
+  // Subscribe to WebSocket updates for real-time progress  
   useWebSocket(scanId);
+
+  // Show immediate loading state for better UX
+  if (!scanSession) {
+    return (
+      <Card className="bg-slate-800 border-slate-700 p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+          <h3 className="text-xl font-semibold text-white mb-2">Starting AI Security Analysis</h3>
+          <p className="text-slate-400">Connecting to target website and initializing vulnerability scanner...</p>
+          
+          <div className="mt-6 space-y-4">
+            <div className="w-full bg-slate-700 rounded-full h-3 relative overflow-hidden">
+              <div className="h-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-400 animate-pulse" 
+                   style={{ width: '25%' }} />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-300/30 to-transparent animate-shimmer" />
+            </div>
+            <div className="flex justify-between text-sm text-slate-400">
+              <span>Establishing secure connection...</span>
+              <span>25%</span>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   const getProgressSteps = () => {
     const progress = scanSession?.progress || 0;
@@ -97,19 +122,17 @@ export default function AnalysisProgress({ scanId }: AnalysisProgressProps) {
             </div>
             <div className="w-full bg-slate-700 rounded-full h-3 relative overflow-hidden">
               <div 
-                className={`h-3 rounded-full transition-all duration-500 ${
-                  scanSession?.status === 'running' ? 'bg-gradient-to-r from-success to-success/80 animate-pulse' : 
-                  scanSession?.status === 'completed' ? 'bg-success' :
-                  scanSession?.status === 'failed' ? 'bg-danger' : 'bg-slate-600'
+                className={`h-3 rounded-full transition-all duration-300 ${
+                  scanSession?.status === 'running' ? 'bg-gradient-to-r from-blue-600 to-blue-400 animate-pulse' : 
+                  scanSession?.status === 'completed' ? 'bg-green-600' :
+                  scanSession?.status === 'failed' ? 'bg-red-600' : 'bg-slate-600'
                 }`}
-                style={{ width: `${scanSession?.progress || 0}%` }}
+                style={{ width: `${Math.max(5, scanSession?.progress || 0)}%` }}
               />
-              {scanSession?.status === 'running' && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-bounce-slow" 
-                     style={{ 
-                       animation: 'shimmer 2s infinite',
-                       backgroundSize: '200% 100%'
-                     }} 
+              {(scanSession?.status === 'running' || scanSession?.status === 'pending') && (
+                <div 
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-300/30 to-transparent animate-shimmer"
+                  style={{ animation: 'shimmer 1.5s infinite' }}
                 />
               )}
             </div>

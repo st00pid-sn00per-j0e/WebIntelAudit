@@ -98,17 +98,21 @@ export default function URLInputSection({ onScanStart }: URLInputSectionProps) {
               <Button
                 onClick={handleStartScan}
                 disabled={startScanMutation.isPending}
-                className="px-6 py-3 bg-primary hover:bg-blue-700 text-white font-medium"
+                className={`px-6 py-3 font-medium text-white transition-all duration-300 ${
+                  startScanMutation.isPending 
+                    ? 'bg-blue-600 animate-pulse shadow-lg shadow-blue-500/50' 
+                    : 'bg-primary hover:bg-blue-700 hover:shadow-lg'
+                }`}
               >
                 {startScanMutation.isPending ? (
-                  <>
+                  <div className="flex items-center">
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Starting Analysis...
-                  </>
+                    <span className="animate-pulse">Analyzing Website...</span>
+                  </div>
                 ) : (
                   <>
                     <Play className="h-4 w-4 mr-2" />
-                    Start Scan
+                    Start AI Security Scan
                   </>
                 )}
               </Button>

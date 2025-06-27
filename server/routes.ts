@@ -36,6 +36,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           sessionConnections.get(sessionId)!.add(ws);
           console.log(`Total connections for session ${sessionId}: ${sessionConnections.get(sessionId)!.size}`);
+          
+          // Send confirmation back to client
+          ws.send(JSON.stringify({
+            type: 'subscribed',
+            sessionId: sessionId
+          }));
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
