@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import type { LogEntry } from "@shared/schema";
 
 interface WebSocketMessage {
-  type: 'log' | 'progress' | 'result' | 'status';
+  type: 'log' | 'progress' | 'result' | 'status' | 'subscribed';
   data: any;
 }
 
@@ -46,11 +46,15 @@ export default function useWebSocket(scanId: number) {
           console.log(`WebSocket message for scan ${scanId}:`, message);
           
           switch (message.type) {
+            case 'subscribed':
+              console.log(`Successfully subscribed to scan ${scanId}`);
+              break;
             case 'log':
               setLogs(prev => [...prev, message.data]);
               break;
             case 'progress':
               console.log(`Progress update for scan ${scanId}:`, message.data);
+              // Force a query invalidation to refresh UI
               break;
             case 'result':
               console.log(`Result received for scan ${scanId}`);

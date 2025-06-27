@@ -19,7 +19,7 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
     refetchInterval: 200,
   });
 
-  const { logs } = useWebSocket(scanId);
+  const { logs, isConnected } = useWebSocket(scanId);
 
   // Simulate browser actions based on scan progress
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
 
   const getSessionStatus = () => {
     if (!scanSession) return "initializing";
-    return scanSession.status;
+    return scanSession.status || "pending";
   };
 
   const getStatusColor = (status: string) => {
@@ -64,7 +64,7 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
           <Monitor className="h-5 w-5" />
           Live Browser Session
           <Badge className={`ml-auto ${getStatusColor(getSessionStatus())}`}>
-            {getSessionStatus().toUpperCase()}
+            {getSessionStatus()?.toUpperCase() || "PENDING"}
           </Badge>
         </CardTitle>
       </CardHeader>
