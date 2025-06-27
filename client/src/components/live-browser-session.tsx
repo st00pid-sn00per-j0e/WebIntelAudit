@@ -95,14 +95,28 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
                     className="w-full h-full object-cover object-top"
                   />
                 ) : (
-                  // Fallback loading state
+                  // Live scanning simulation
                   <div className="absolute inset-0 bg-slate-50">
                     <div className="p-4 space-y-4">
-                      <div className="bg-slate-200 h-12 rounded animate-pulse"></div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
-                        <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
-                        <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                      {/* URL Bar */}
+                      <div className="bg-white border border-slate-200 rounded-md p-2 flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-slate-400" />
+                        <span className="text-sm text-slate-600 font-mono flex-1">{scanSession?.url || 'Loading...'}</span>
+                      </div>
+                      
+                      {/* Page Content Simulation */}
+                      <div className="space-y-3">
+                        <div className="bg-slate-200 h-12 rounded animate-pulse"></div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                          <div className="bg-slate-200 h-32 rounded animate-pulse delay-75"></div>
+                          <div className="bg-slate-200 h-32 rounded animate-pulse delay-150"></div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="bg-slate-200 h-4 rounded animate-pulse w-full"></div>
+                          <div className="bg-slate-200 h-4 rounded animate-pulse w-5/6"></div>
+                          <div className="bg-slate-200 h-4 rounded animate-pulse w-4/6"></div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -137,7 +151,10 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
               </div>
             ) : (
               <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
-                <p className="text-slate-400">Waiting to start...</p>
+                <div className="text-center">
+                  <Globe className="h-12 w-12 text-slate-400 mb-2" />
+                  <p className="text-slate-400">Waiting to start...</p>
+                </div>
               </div>
             )}
           </div>

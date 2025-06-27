@@ -15,8 +15,8 @@ export default function AnalysisProgress({ scanId }: AnalysisProgressProps) {
     refetchInterval: 200, // Fast polling for real-time updates
   });
 
-  // Subscribe to WebSocket updates for real-time progress  
-  useWebSocket(scanId);
+  // Subscribe to WebSocket updates for real-time progress and logs
+  const { logs } = useWebSocket(scanId);
 
   // Show immediate loading state for better UX
   if (!scanSession) {
@@ -103,7 +103,7 @@ export default function AnalysisProgress({ scanId }: AnalysisProgressProps) {
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 space-y-4">
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
@@ -172,6 +172,30 @@ export default function AnalysisProgress({ scanId }: AnalysisProgressProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Live Logs Section */}
+      {(logs.length > 0 || (scanSession?.logs && scanSession.logs.length > 0)) && (
+        <Card className="bg-card border-border">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Analysis Logs</h3>
+            <div className="bg-slate-900 rounded-lg p-4 max-h-64 overflow-y-auto font-mono text-xs space-y-1">
+              {(scanSession?.logs || logs).map((log, index) => (
+                <div key={index} className="flex items-start space-x-2">
+                  <span className="text-slate-500">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  <span className={`font-semibold ${
+                    log.level === 'ERROR' ? 'text-red-400' :
+                    log.level === 'WARN' ? 'text-yellow-400' :
+                    log.level === 'INFO' ? 'text-blue-400' :
+                    log.level === 'DEBUG' ? 'text-slate-400' :
+                    'text-green-400'
+                  }`}>[{log.level}]</span>
+                  <span className="text-slate-300 flex-1">{log.message}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
