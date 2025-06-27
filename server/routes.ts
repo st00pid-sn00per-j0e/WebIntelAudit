@@ -58,13 +58,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Broadcast update to all clients subscribed to a session
   const broadcastUpdate = (sessionId: number, data: any) => {
-    console.log(`Broadcasting to session ${sessionId}:`, data.type);
+    console.log(`Broadcasting to session ${sessionId}:`, data.type, data);
     const connections = sessionConnections.get(sessionId);
     if (connections && connections.size > 0) {
       console.log(`Found ${connections.size} connections for session ${sessionId}`);
       connections.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) {
+          console.log(`Sending data to WebSocket:`, data);
           ws.send(JSON.stringify(data));
+        } else {
+          console.log(`WebSocket connection not open, removing from session ${sessionId}`);
+          connections.delete(ws);
         }
       });
     } else {

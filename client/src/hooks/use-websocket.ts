@@ -27,13 +27,17 @@ export default function useWebSocket(scanId: number) {
         setIsConnected(true);
         reconnectAttempts.current = 0;
         
-        // Subscribe to updates for this scan session
-        const subscribeMessage = {
-          type: 'subscribe',
-          sessionId: scanId.toString()
-        };
-        console.log('Sending subscription:', subscribeMessage);
-        ws.send(JSON.stringify(subscribeMessage));
+        // Subscribe to updates for this scan session with delay to ensure connection is ready
+        setTimeout(() => {
+          const subscribeMessage = {
+            type: 'subscribe',
+            sessionId: scanId.toString()
+          };
+          console.log('Sending subscription:', subscribeMessage);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(subscribeMessage));
+          }
+        }, 100);
       };
 
       ws.onmessage = (event) => {
