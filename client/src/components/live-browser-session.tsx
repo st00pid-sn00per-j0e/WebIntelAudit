@@ -90,25 +90,54 @@ export default function LiveBrowserSession({ scanId }: LiveBrowserSessionProps) 
               {scanSession?.url || "about:blank"}
             </div>
           </div>
-          <div className="p-4 h-32 bg-gradient-to-br from-slate-800 to-slate-900 relative overflow-hidden">
-            {scanSession?.status === 'running' && (
-              <div className="absolute inset-0 bg-blue-500/10 animate-pulse">
-                <div className="absolute top-2 left-2 right-2 h-4 bg-slate-700 rounded animate-pulse"></div>
-                <div className="absolute top-8 left-2 w-1/3 h-3 bg-slate-700 rounded animate-pulse"></div>
-                <div className="absolute top-14 left-2 w-1/2 h-3 bg-slate-700 rounded animate-pulse"></div>
-                <div className="absolute bottom-2 right-2">
-                  <Globe className="h-6 w-6 text-blue-400 animate-spin" />
+          <div className="relative bg-white h-96 overflow-hidden">
+            {scanSession?.status === 'running' ? (
+              <div className="absolute inset-0 bg-slate-50">
+                {/* Simulated Website Content */}
+                <div className="p-4 space-y-4">
+                  <div className="bg-slate-200 h-12 rounded animate-pulse"></div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                    <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                    <div className="bg-slate-200 h-32 rounded animate-pulse"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="bg-slate-200 h-4 w-full rounded animate-pulse"></div>
+                    <div className="bg-slate-200 h-4 w-3/4 rounded animate-pulse"></div>
+                    <div className="bg-slate-200 h-4 w-5/6 rounded animate-pulse"></div>
+                  </div>
+                </div>
+                {/* Scanning Overlay */}
+                <div className="absolute inset-0 bg-blue-500/5 pointer-events-none">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 animate-scan"></div>
+                </div>
+                {/* Status Indicator */}
+                <div className="absolute bottom-4 right-4 bg-black/80 text-white px-3 py-1 rounded-full text-xs flex items-center gap-2">
+                  <Activity className="h-3 w-3 animate-pulse" />
+                  Analyzing Page...
                 </div>
               </div>
-            )}
-            {scanSession?.status === 'completed' && (
-              <div className="text-center text-green-400 font-mono text-sm">
-                ✓ Page analysis completed successfully
+            ) : scanSession?.status === 'completed' ? (
+              <div className="absolute inset-0 bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                  <Eye className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                  <p className="text-slate-700 font-medium">Analysis Complete</p>
+                  <p className="text-slate-500 text-sm mt-1">All tests passed successfully</p>
+                </div>
               </div>
-            )}
-            {scanSession?.status === 'failed' && (
-              <div className="text-center text-red-400 font-mono text-sm">
-                ✗ Browser session failed
+            ) : scanSession?.status === 'failed' ? (
+              <div className="absolute inset-0 bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="bg-red-100 rounded-full p-4 inline-block mb-4">
+                    <Monitor className="h-12 w-12 text-red-500" />
+                  </div>
+                  <p className="text-slate-700 font-medium">Session Failed</p>
+                  <p className="text-slate-500 text-sm mt-1">Unable to analyze the webpage</p>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
+                <p className="text-slate-400">Waiting to start...</p>
               </div>
             )}
           </div>

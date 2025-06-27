@@ -43,14 +43,8 @@ export default function Home() {
         {/* URL Input Section */}
         <URLInputSection onScanStart={setCurrentScanId} />
 
-        {/* Analysis Progress */}
-        {currentScanId && <AnalysisProgress scanId={currentScanId} />}
-
-        {/* Live Analysis View */}
+        {/* Live Analysis View - contains Browser Session, Progress and Results */}
         {currentScanId && <LiveAnalysisView scanId={currentScanId} />}
-
-        {/* Analysis Results */}
-        {currentScanId && <AnalysisResults scanId={currentScanId} />}
 
         {/* Detailed Reports */}
         {currentScanId && <DetailedReports scanId={currentScanId} />}
