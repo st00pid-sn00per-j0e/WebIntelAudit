@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Play } from "lucide-react";
+import { Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,8 +100,17 @@ export default function URLInputSection({ onScanStart }: URLInputSectionProps) {
                 disabled={startScanMutation.isPending}
                 className="px-6 py-3 bg-primary hover:bg-blue-700 text-white font-medium"
               >
-                <Play className="h-4 w-4 mr-2" />
-                {startScanMutation.isPending ? "Starting..." : "Start Scan"}
+                {startScanMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Starting Analysis...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Start Scan
+                  </>
+                )}
               </Button>
             </div>
           </div>

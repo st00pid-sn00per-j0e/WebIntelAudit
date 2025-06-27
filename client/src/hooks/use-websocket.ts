@@ -18,37 +18,41 @@ export default function useWebSocket(scanId: number) {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       
+      console.log(`Connecting to WebSocket for scan ${scanId}: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log(`WebSocket connected for scan ${scanId}`);
         setIsConnected(true);
         reconnectAttempts.current = 0;
         
         // Subscribe to updates for this scan session
-        ws.send(JSON.stringify({
+        const subscribeMessage = {
           type: 'subscribe',
           sessionId: scanId.toString()
-        }));
+        };
+        console.log('Sending subscription:', subscribeMessage);
+        ws.send(JSON.stringify(subscribeMessage));
       };
 
       ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
+          console.log(`WebSocket message for scan ${scanId}:`, message);
           
           switch (message.type) {
             case 'log':
               setLogs(prev => [...prev, message.data]);
               break;
             case 'progress':
-              // Progress updates are handled by React Query refetching
+              console.log(`Progress update for scan ${scanId}:`, message.data);
               break;
             case 'result':
-              // Results are handled by React Query refetching
+              console.log(`Result received for scan ${scanId}`);
               break;
             case 'status':
-              // Status updates are handled by React Query refetching
+              console.log(`Status update for scan ${scanId}:`, message.data);
               break;
           }
         } catch (error) {

@@ -27,12 +27,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString());
+        console.log('Received WebSocket message:', message);
         if (message.type === 'subscribe' && message.sessionId) {
           const sessionId = parseInt(message.sessionId);
+          console.log(`Subscribing WebSocket to session ${sessionId}`);
           if (!sessionConnections.has(sessionId)) {
             sessionConnections.set(sessionId, new Set());
           }
           sessionConnections.get(sessionId)!.add(ws);
+          console.log(`Total connections for session ${sessionId}: ${sessionConnections.get(sessionId)!.size}`);
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);

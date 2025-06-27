@@ -12,10 +12,10 @@ interface AnalysisProgressProps {
 export default function AnalysisProgress({ scanId }: AnalysisProgressProps) {
   const { data: scanSession } = useQuery<ScanSession>({
     queryKey: ['/api/scans', scanId],
-    refetchInterval: scanSession => scanSession?.status === 'completed' ? false : 2000,
+    refetchInterval: 500,
   });
 
-  // Subscribe to WebSocket updates
+  // Subscribe to WebSocket updates for real-time progress
   useWebSocket(scanId);
 
   const getProgressSteps = () => {
@@ -86,6 +86,32 @@ export default function AnalysisProgress({ scanId }: AnalysisProgressProps) {
             <div className="flex items-center space-x-2">
               <div className={`h-2 w-2 rounded-full ${scanSession?.status === 'running' ? 'bg-success animate-pulse-slow' : 'bg-slate-400'}`} />
               <span className="text-sm text-slate-400">{getStatusText()}</span>
+            </div>
+          </div>
+          
+          {/* Overall Progress Bar */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-white">Overall Progress</span>
+              <span className="text-sm text-slate-400">{scanSession?.progress || 0}%</span>
+            </div>
+            <div className="w-full bg-slate-700 rounded-full h-3 relative overflow-hidden">
+              <div 
+                className={`h-3 rounded-full transition-all duration-500 ${
+                  scanSession?.status === 'running' ? 'bg-gradient-to-r from-success to-success/80 animate-pulse' : 
+                  scanSession?.status === 'completed' ? 'bg-success' :
+                  scanSession?.status === 'failed' ? 'bg-danger' : 'bg-slate-600'
+                }`}
+                style={{ width: `${scanSession?.progress || 0}%` }}
+              />
+              {scanSession?.status === 'running' && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-bounce-slow" 
+                     style={{ 
+                       animation: 'shimmer 2s infinite',
+                       backgroundSize: '200% 100%'
+                     }} 
+                />
+              )}
             </div>
           </div>
           
