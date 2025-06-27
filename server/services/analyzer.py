@@ -360,11 +360,11 @@ class WebAuditor:
                 flows.append("Site navigation flow")
                 
             # Look for login/register elements
-            if soup.find_all(text=re.compile(r'login|sign in|register|sign up', re.I)):
+            if soup.find_all(string=re.compile(r'login|sign in|register|sign up', re.I)):
                 flows.append("Authentication workflow")
                 
             # Look for search
-            if soup.find_all(['input'], {'type': 'search'}) or soup.find_all(text=re.compile(r'search', re.I)):
+            if soup.find_all(['input'], {'type': 'search'}) or soup.find_all(string=re.compile(r'search', re.I)):
                 flows.append("Search functionality")
                 
         except Exception as e:

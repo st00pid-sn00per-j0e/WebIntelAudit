@@ -49,13 +49,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Broadcast update to all clients subscribed to a session
   const broadcastUpdate = (sessionId: number, data: any) => {
+    console.log(`Broadcasting to session ${sessionId}:`, data.type);
     const connections = sessionConnections.get(sessionId);
-    if (connections) {
+    if (connections && connections.size > 0) {
+      console.log(`Found ${connections.size} connections for session ${sessionId}`);
       connections.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(data));
         }
       });
+    } else {
+      console.log(`No active connections for session ${sessionId}`);
     }
   };
 
@@ -73,12 +77,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Start the Python analyzer process
       const pythonScript = path.join(process.cwd(), 'server', 'services', 'analyzer.py');
+      console.log(`Starting Python analysis for session ${session.id}: ${pythonScript}`);
+      console.log(`Command: python3 ${pythonScript} ${url} ${session.id} '${JSON.stringify(validatedOptions)}'`);
+      
       const analysisProcess = spawn('python3', [
         pythonScript,
         url,
         session.id.toString(),
         JSON.stringify(validatedOptions)
-      ]);
+      ], {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
 
       // Handle Python process output
       analysisProcess.stdout.on('data', async (data) => {
@@ -111,16 +120,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       analysisProcess.stderr.on('data', async (data) => {
+        const errorMessage = data.toString().trim();
+        console.error(`Python stderr for session ${session.id}:`, errorMessage);
         const errorLog: LogEntry = {
           timestamp: new Date().toISOString(),
           level: 'ERROR',
-          message: data.toString().trim()
+          message: errorMessage
         };
         await storage.addLogEntry(session.id, errorLog);
         broadcastUpdate(session.id, { type: 'log', data: errorLog });
       });
 
       analysisProcess.on('close', async (code) => {
+        console.log(`Python process for session ${session.id} exited with code ${code}`);
         if (code !== 0) {
           await storage.updateScanSession(session.id, { 
             status: 'failed',
@@ -128,6 +140,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           broadcastUpdate(session.id, { type: 'status', data: { status: 'failed' } });
         }
+      });
+
+      analysisProcess.on('error', (error) => {
+        console.error(`Failed to start Python process for session ${session.id}:`, error);
       });
 
       res.json(session);
