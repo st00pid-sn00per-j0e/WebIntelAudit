@@ -19,7 +19,7 @@ export default function useWebSocket(scanId: number) {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
-      
+
       console.log(`Connecting to WebSocket for scan ${scanId}: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -28,7 +28,7 @@ export default function useWebSocket(scanId: number) {
         console.log(`WebSocket connected for scan ${scanId}`);
         setIsConnected(true);
         reconnectAttempts.current = 0;
-        
+
         // Subscribe to updates for this scan session with delay to ensure connection is ready
         setTimeout(() => {
           const subscribeMessage = {
@@ -46,7 +46,7 @@ export default function useWebSocket(scanId: number) {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
           console.log(`WebSocket message for scan ${scanId}:`, message);
-          
+
           switch (message.type) {
             case 'subscribed':
               console.log(`Successfully subscribed to scan ${scanId}`);
@@ -103,9 +103,14 @@ export default function useWebSocket(scanId: number) {
   };
 
   useEffect(() => {
-    connect();
+    const interval = setInterval(() => {
+    fetch("/api/scans")
+      .then(res => res.ok && res.json())
+      .then(data => setScanData(data));
+  }, 5000); // Throttled to 5 seconds
 
     return () => {
+      clearInterval(interval);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }

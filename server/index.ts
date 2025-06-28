@@ -2,6 +2,17 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+
+import rateLimit from 'express-rate-limit';
+
+const scanLimiter = rateLimit({
+  windowMs: 5000, // 5 seconds
+  max: 1, // limit each IP to 1 request per windowMs
+  message: "Too many requests, slow down."
+});
+
+app.use('/api/scans', scanLimiter);
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

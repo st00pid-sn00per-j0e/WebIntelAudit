@@ -191,6 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/scans', async (req, res) => {
     try {
       const sessions = await storage.getAllScanSessions();
+      res.setHeader("Cache-Control", "max-age=5"); // Cache for 5 seconds
       res.json(sessions);
     } catch (error) {
       console.error('Error fetching scans:', error);
