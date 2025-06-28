@@ -89,74 +89,71 @@ class AppiumWebAuditor:
         sys.stdout.flush()
         
     def setup_driver(self):
-        """Setup Appium driver for web automation"""
+        """Setup Chrome WebDriver for web automation"""
         try:
-            # Appium capabilities for Chrome browser automation
-            caps = {
-                'platformName': 'Android',
-                'browserName': 'Chrome',
-                'automationName': 'UiAutomator2',
-                'noReset': True,
-                'newCommandTimeout': 300,
-                'chromeOptions': {
-                    'args': [
-                        '--headless',
-                        '--no-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-gpu',
-                        '--window-size=1920,1080',
-                        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    ]
-                }
-            }
+            from selenium import webdriver as selenium_webdriver
+            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.chrome.service import Service
             
-            # For local testing, use desktop Chrome via Appium
-            desktop_caps = {
-                'platformName': 'Windows',
-                'browserName': 'chrome',
-                'appium:automationName': 'Selenium',
-                'appium:chromeOptions': {
-                    'args': [
-                        '--headless',
-                        '--no-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-gpu',
-                        '--window-size=1920,1080'
-                    ]
-                }
-            }
+            # Chrome options optimized for Replit environment
+            chrome_options = Options()
+            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--disable-web-security')
+            chrome_options.add_argument('--disable-features=VizDisplayCompositor')
+            chrome_options.add_argument('--window-size=1920,1080')
+            chrome_options.add_argument('--remote-debugging-port=9222')
+            chrome_options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+            
+            # Try multiple Chrome binary locations
+            chrome_binaries = [
+                '/usr/bin/chromium-browser',
+                '/usr/bin/chromium',
+                '/usr/bin/google-chrome',
+                '/usr/bin/google-chrome-stable'
+            ]
+            
+            import os
+            chrome_binary = None
+            for binary in chrome_binaries:
+                if os.path.exists(binary):
+                    chrome_binary = binary
+                    break
+            
+            if chrome_binary:
+                chrome_options.binary_location = chrome_binary
+                self.log("INFO", f"Found Chrome binary at: {chrome_binary}")
             
             try:
-                # Skip Appium server connection, go directly to Chrome WebDriver
-                # This ensures the application works without requiring Appium server setup
-                pass
-            except:
-                # Fallback to direct Chrome WebDriver
-                from selenium import webdriver as selenium_webdriver
-                from selenium.webdriver.chrome.options import Options
-                
-                chrome_options = Options()
-                chrome_options.add_argument('--headless')
-                chrome_options.add_argument('--no-sandbox')
-                chrome_options.add_argument('--disable-dev-shm-usage')
-                chrome_options.add_argument('--disable-gpu')
-                chrome_options.add_argument('--window-size=1920,1080')
-                
+                # Try with ChromeDriverManager first
+                from webdriver_manager.chrome import ChromeDriverManager
+                service = Service(ChromeDriverManager().install())
+                self.driver = selenium_webdriver.Chrome(service=service, options=chrome_options)
+                self.log("INFO", "Browser created using ChromeDriverManager")
+            except Exception as e:
+                self.log("WARN", f"ChromeDriverManager failed: {str(e)}, trying system chromedriver")
                 try:
-                    from selenium.webdriver.chrome.service import Service
-                    from webdriver_manager.chrome import ChromeDriverManager
-                    
-                    service = Service(ChromeDriverManager().install())
+                    # Try system chromedriver
+                    service = Service('/usr/bin/chromedriver')
                     self.driver = selenium_webdriver.Chrome(service=service, options=chrome_options)
-                except:
+                    self.log("INFO", "Browser created using system chromedriver")
+                except Exception as e2:
+                    self.log("WARN", f"System chromedriver failed: {str(e2)}, trying default")
+                    # Last resort - try without explicit service
                     self.driver = selenium_webdriver.Chrome(options=chrome_options)
-                    
-                self.log("INFO", "Browser instance created using Chrome WebDriver fallback")
-                self.send_browser_action("Browser launched in headless mode")
-                return True
+                    self.log("INFO", "Browser created using default Chrome setup")
+            
+            # Test if driver is working
+            self.driver.set_page_load_timeout(30)
+            self.log("INFO", "Browser driver successfully initialized")
+            self.send_browser_action("Browser launched successfully")
+            return True
                 
         except Exception as e:
-            self.log("ERROR", f"Failed to create browser instance: {str(e)}")
+            self.log("ERROR", f"Failed to setup browser driver: {str(e)}")
+            self.log("ERROR", f"Chrome may not be properly installed. Error details: {type(e).__name__}")
             return False
             
     def analyze_url(self, url, options):
