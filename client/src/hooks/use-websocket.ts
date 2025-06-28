@@ -104,13 +104,13 @@ export default function useWebSocket(scanId: number) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-    fetch("/api/scans")
-      .then(res => res.ok && res.json())
-      .then(data => setScanData(data));
-  }, 5000); // Throttled to 5 seconds
+      fetch("/api/scans")
+        .then(res => res.ok && res.json())
+        .then(data => setScanData(data));
+    }, 5000); // Throttled to 5 seconds
 
     return () => {
-      clearInterval(interval);
+      clearInterval(interval); // Ensure cleanup
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
