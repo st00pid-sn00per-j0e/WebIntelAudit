@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import chromedriver_autoinstaller
+
 import sys
 import json
 import time
@@ -96,6 +98,16 @@ class AppiumWebAuditor:
             from selenium.webdriver.chrome.service import Service
             
             # Chrome options optimized for Replit environment
+            # Setup Chrome WebDriver for web automation
+        try:
+            from selenium import webdriver as selenium_webdriver
+            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.chrome.service import Service
+
+            # Ensure the correct version of ChromeDriver is installed
+            chromedriver_autoinstaller.install()
+
+            # Chrome options optimized for Replit environment
             chrome_options = Options()
             chrome_options.add_argument('--headless')
             chrome_options.add_argument('--no-sandbox')
@@ -125,26 +137,14 @@ class AppiumWebAuditor:
             if chrome_binary:
                 chrome_options.binary_location = chrome_binary
                 self.log("INFO", f"Found Chrome binary at: {chrome_binary}")
-            
+
+            # Attempt to establish a WebDriver session
             try:
-                # Try with ChromeDriverManager first
-                from webdriver_manager.chrome import ChromeDriverManager
-                service = Service(ChromeDriverManager().install())
-                self.driver = selenium_webdriver.Chrome(service=service, options=chrome_options)
-                self.log("INFO", "Browser created using ChromeDriverManager")
-            except Exception as e:
-                self.log("WARN", f"ChromeDriverManager failed: {str(e)}, trying system chromedriver")
-                try:
-                    # Try system chromedriver
-                    service = Service('/usr/bin/chromedriver')
-                    self.driver = selenium_webdriver.Chrome(service=service, options=chrome_options)
-                    self.log("INFO", "Browser created using system chromedriver")
-                except Exception as e2:
-                    self.log("WARN", f"System chromedriver failed: {str(e2)}, trying default")
-                    # Last resort - try without explicit service
-                    self.driver = selenium_webdriver.Chrome(options=chrome_options)
-                    self.log("INFO", "Browser created using default Chrome setup")
-            
+                self.driver = selenium_webdriver.Chrome(options=chrome_options)
+            except WebDriverException as e:
+                self.log("ERROR", f"Failed to setup browser driver: {str(e)}")
+                return False
+
             # Test if driver is working
             self.driver.set_page_load_timeout(30)
             self.log("INFO", "Browser driver successfully initialized")
