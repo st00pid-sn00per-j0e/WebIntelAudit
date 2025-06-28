@@ -1,9 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-
-
 import rateLimit from 'express-rate-limit';
+
+// Initialize app first
+const app = express();
 
 const scanLimiter = rateLimit({
   windowMs: 5000, // 5 seconds
@@ -11,9 +12,9 @@ const scanLimiter = rateLimit({
   message: "Too many requests, slow down."
 });
 
+// Apply rate limiter
 app.use('/api/scans', scanLimiter);
 
-const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
