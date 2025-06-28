@@ -11,6 +11,15 @@ wheels = [
 ]
 
 [[package]]
+name = "appium-python-client"
+version = "5.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "selenium" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/26/9c/da7459dcf7e3ac8e7562e58f2e6de1dbd1441822afb7d2636fcc9ada34fd/appium_python_client-5.1.1.tar.gz", hash = "sha256:3f26e244a09217062e19fe71db9c7390be3fab497dd5e16268e7310fa081b711", size = 129186 }
+
+[[package]]
 name = "attrs"
 version = "25.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -713,6 +722,7 @@ name = "repl-nix-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "appium-python-client" },
     { name = "beautifulsoup4" },
     { name = "pillow" },
     { name = "requests" },
@@ -723,6 +733,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "appium-python-client", specifier = ">=5.1.1" },
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
     { name = "pillow", specifier = ">=11.2.1" },
     { name = "requests", specifier = ">=2.32.4" },

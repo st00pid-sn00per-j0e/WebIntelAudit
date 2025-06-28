@@ -63,7 +63,7 @@ AI Web Inspector is a comprehensive web auditing tool that combines Selenium aut
 - **drizzle-orm**: Type-safe database ORM
 - **@tanstack/react-query**: Server state management
 - **@radix-ui/***: Accessible UI component primitives
-- **selenium**: Web automation framework (Python)
+- **appium-python-client**: Web automation framework (Python) - Replaced Selenium for better browser automation capabilities
 - **spacy**: Natural language processing library (Python)
 
 ### Development Tools
@@ -116,6 +116,12 @@ Changelog:
   * Fixed live browser session visualization
   * Python dependencies installed for analysis engine
   * Application fully functional with real data processing
+- June 28, 2025. Replaced Selenium with Appium for automated browser sessions:
+  * Installed Appium-Python-Client for better browser automation
+  * Created new appium_analyzer.py with full Appium integration
+  * Updated server routes to use Appium analyzer
+  * Maintained all existing functionality with improved automation capabilities
+  * Fallback to Chrome WebDriver for compatibility
 ```
 
 ## User Preferences
