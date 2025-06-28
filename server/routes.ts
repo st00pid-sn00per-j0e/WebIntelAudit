@@ -88,15 +88,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create scan session
       const session = await storage.createScanSession(validatedUrl);
 
-      // Start the Python Appium analyzer process
-      const pythonScript = path.join(process.cwd(), 'server', 'services', 'appium_analyzer.py');
-      console.log(`Starting Appium-based analysis for session ${session.id}: ${pythonScript}`);
-      console.log(`Command: python3 ${pythonScript} ${url} ${session.id} '${JSON.stringify(validatedOptions)}'`);
+      // Start the Python Playwright analyzer process
+      const pythonScript = path.join(process.cwd(), 'server', 'services', 'playwright_analyzer.py');
+      console.log(`Starting Playwright-based analysis for session ${session.id}: ${pythonScript}`);
+      console.log(`Command: python3 ${pythonScript} ${session.id} ${url} '${JSON.stringify(validatedOptions)}'`);
       
       const analysisProcess = spawn('python3', [
         pythonScript,
-        url,
         session.id.toString(),
+        url,
         JSON.stringify(validatedOptions)
       ], {
         stdio: ['pipe', 'pipe', 'pipe']
