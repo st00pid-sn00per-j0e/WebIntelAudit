@@ -1,0 +1,71 @@
+To **fix the `DOMException` caused by Eruda** in your Replit embedded preview window, follow these steps:
+
+---
+
+### ✅ **Fix Strategy: Use Safe Initialization for Eruda**
+
+Wrap the Eruda initialization in a `try-catch` block and ensure you're not running it in a restricted context like Replit's embedded iframe.
+
+#### ✅ **Step-by-step fix (Recommended)**
+
+1. **Check if Eruda is allowed (i.e., not in iframe or sandboxed env)**
+2. **Use `try-catch` to prevent hard crashes**
+3. **Optionally, load it conditionally via a URL param like `?debug=true`**
+
+```js
+(function () {
+  const isIframe = window.self !== window.top;
+  const isDebug = window.location.search.includes('debug=true');
+
+  // Only initialize if we're not in an iframe and the user explicitly wants it
+  if (!isIframe && isDebug) {
+    try {
+      const script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/eruda';
+      script.onload = () => {
+        eruda.init();
+      };
+      document.body.appendChild(script);
+    } catch (err) {
+      console.warn('Eruda init failed:', err);
+    }
+  }
+})();
+```
+
+---
+
+### 🧪 **Test It**
+
+* Run your app **outside the Replit iframe**, by clicking **“Open in new tab”**.
+* Append `?debug=true` to your URL:
+  `https://your-app.replit.app?debug=true`
+
+---
+
+### 🛑 Why This Happens
+
+Replit’s preview window is an **embedded sandboxed iframe**, and Eruda tries to access browser features like:
+
+* `localStorage`, `console`, `document.body`, `window.top`, etc.
+  These get blocked or behave inconsistently in sandboxed iframes, causing `DOMException`.
+
+---
+
+### 💡 Alternative Debugging Approach (if Eruda still fails)
+
+If you just want console-like debugging:
+
+```js
+console.log("Debug Info:", {
+  userAgent: navigator.userAgent,
+  currentUrl: window.location.href,
+  env: process.env
+});
+```
+
+Use browser devtools in "Open in new tab" instead of relying on Eruda in iframe.
+
+---
+
+Let me know if you want this logic auto-loaded only in `development` mode or injected dynamically into HTML via script.
