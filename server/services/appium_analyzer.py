@@ -1,22 +1,26 @@
+
 #!/usr/bin/env python3
 
 import chromedriver_autoinstaller
-
 import sys
 import json
 import time
 import urllib.parse
+import os
 from datetime import datetime
 try:
-    from appium import webdriver as appium_webdriver
-    from appium.webdriver.common.appiumby import AppiumBy
-    APPIUM_AVAILABLE = True
+    from selenium import webdriver as selenium_webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.common.exceptions import TimeoutException, WebDriverException
+    SELENIUM_AVAILABLE = True
 except ImportError:
-    APPIUM_AVAILABLE = False
-    AppiumBy = None
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, WebDriverException
+    SELENIUM_AVAILABLE = False
+    By = None
+
 import requests
 from bs4 import BeautifulSoup
 import base64
@@ -93,23 +97,16 @@ class AppiumWebAuditor:
     def setup_driver(self):
         """Setup Chrome WebDriver for web automation"""
         try:
-            from selenium import webdriver as selenium_webdriver
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.chrome.service import Service
-            
-            # Chrome options optimized for Replit environment
-            # Setup Chrome WebDriver for web automation
-        try:
-            from selenium import webdriver as selenium_webdriver
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.chrome.service import Service
+            if not SELENIUM_AVAILABLE:
+                self.log("ERROR", "Selenium is not available")
+                return False
 
             # Ensure the correct version of ChromeDriver is installed
             chromedriver_autoinstaller.install()
 
             # Chrome options optimized for Replit environment
             chrome_options = Options()
-            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--headless=new')  # Use new headless mode
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--disable-dev-shm-usage')
             chrome_options.add_argument('--disable-gpu')
@@ -119,20 +116,20 @@ class AppiumWebAuditor:
             chrome_options.add_argument('--remote-debugging-port=9222')
             chrome_options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
             
-            # Try multiple Chrome binary locations
-            chrome_binaries = [
-                '/usr/bin/chromium-browser',
-                '/usr/bin/chromium',
-                '/usr/bin/google-chrome',
-                '/usr/bin/google-chrome-stable'
-            ]
-            
-            import os
-            chrome_binary = None
-            for binary in chrome_binaries:
-                if os.path.exists(binary):
-                    chrome_binary = binary
-                    break
+            # Check for Chrome binary path from environment or search common locations
+            chrome_binary = os.environ.get("CHROME_BINARY_PATH")
+            if not chrome_binary:
+                chrome_binaries = [
+                    '/usr/bin/chromium-browser',
+                    '/usr/bin/chromium',
+                    '/usr/bin/google-chrome',
+                    '/usr/bin/google-chrome-stable'
+                ]
+                
+                for binary in chrome_binaries:
+                    if os.path.exists(binary):
+                        chrome_binary = binary
+                        break
             
             if chrome_binary:
                 chrome_options.binary_location = chrome_binary
@@ -157,9 +154,9 @@ class AppiumWebAuditor:
             return False
             
     def analyze_url(self, url, options):
-        """Main analysis function using Appium"""
+        """Main analysis function using Chrome WebDriver"""
         try:
-            self.log("INFO", f"Starting Appium-based analysis of {url}")
+            self.log("INFO", f"Starting Chrome-based analysis of {url}")
             self.update_progress(5, "running")
             
             # Validate URL
@@ -182,7 +179,7 @@ class AppiumWebAuditor:
             self.send_browser_action("Waiting for page to load...")
             try:
                 WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((AppiumBy.TAG_NAME, "body"))
+                    EC.presence_of_element_located((By.TAG_NAME, "body"))
                 )
             except TimeoutException:
                 self.log("WARN", "Page load timeout - continuing with analysis")
@@ -218,11 +215,11 @@ class AppiumWebAuditor:
                 
             # Check for forms and inputs
             self.send_browser_action("Scanning for forms and input fields...")
-            forms = self.driver.find_elements(AppiumBy.TAG_NAME if AppiumBy else "tag name", "form")
-            inputs = self.driver.find_elements(AppiumBy.TAG_NAME if AppiumBy else "tag name", "input")
+            forms = self.driver.find_elements(By.TAG_NAME, "form")
+            inputs = self.driver.find_elements(By.TAG_NAME, "input")
             self.log("INFO", f"Found {len(forms)} forms and {len(inputs)} input fields")
             
-            # Analyze JavaScript
+            # Analyze JavaScript and performance
             if options.get('performanceTest', True):
                 self.send_browser_action("Analyzing JavaScript and performance...")
                 self.log("INFO", "Running performance analysis")
@@ -238,6 +235,14 @@ class AppiumWebAuditor:
                 content_results = self.content_analysis(soup)
                 results.update(content_results)
                 self.update_progress(90)
+                
+            # Security headers analysis via requests
+            if options.get('deepInspection', False):
+                self.send_browser_action("Deep security headers analysis...")
+                self.log("INFO", "Running deep security analysis")
+                headers_results = self.analyze_security_headers(url)
+                if headers_results:
+                    results["vulnerabilities"].extend(headers_results)
                 
             # Final screenshot
             self.send_browser_action("Analysis complete!")
@@ -278,8 +283,37 @@ class AppiumWebAuditor:
         except:
             return False
             
+    def analyze_security_headers(self, url):
+        """Analyze security headers using requests"""
+        vulnerabilities = []
+        try:
+            response = requests.head(url, timeout=10)
+            
+            # Check for important security headers
+            security_headers = {
+                'X-Frame-Options': 'Prevents clickjacking attacks',
+                'X-Content-Type-Options': 'Prevents MIME type sniffing',
+                'X-XSS-Protection': 'Enables XSS filtering',
+                'Strict-Transport-Security': 'Forces HTTPS connections',
+                'Content-Security-Policy': 'Controls resource loading'
+            }
+            
+            for header, description in security_headers.items():
+                if header not in response.headers:
+                    vulnerabilities.append({
+                        "type": "missing_headers",
+                        "severity": "medium",
+                        "title": f"Missing {header}",
+                        "description": description,
+                        "recommendation": f"Add {header} header to improve security"
+                    })
+        except Exception as e:
+            self.log("WARN", f"Failed to analyze headers: {str(e)}")
+            
+        return vulnerabilities
+            
     def security_analysis(self, url, soup):
-        """Perform security analysis using Appium"""
+        """Perform security analysis using Chrome WebDriver"""
         vulnerabilities = []
         
         # Check HTTPS
@@ -293,7 +327,7 @@ class AppiumWebAuditor:
             })
             
         # Check for password fields without HTTPS
-        password_fields = self.driver.find_elements(AppiumBy.CSS_SELECTOR, "input[type='password']")
+        password_fields = self.driver.find_elements(By.CSS_SELECTOR, "input[type='password']")
         if password_fields and not url.startswith('https://'):
             vulnerabilities.append({
                 "type": "other",
@@ -318,10 +352,22 @@ class AppiumWebAuditor:
                     "recommendation": "Implement CSRF tokens for all forms"
                 })
                 
+        # Check for inline JavaScript (potential XSS)
+        inline_scripts = soup.find_all('script', string=True)
+        if inline_scripts:
+            vulnerabilities.append({
+                "type": "xss",
+                "severity": "medium",
+                "title": "Inline JavaScript detected",
+                "description": f"Found {len(inline_scripts)} inline script tags",
+                "location": "Multiple locations",
+                "recommendation": "Move JavaScript to external files and implement CSP"
+            })
+                
         return {"vulnerabilities": vulnerabilities}
         
     def performance_analysis(self):
-        """Analyze page performance using Appium"""
+        """Analyze page performance using Chrome WebDriver"""
         try:
             # Execute JavaScript to get performance metrics
             performance_data = self.driver.execute_script("""
@@ -368,6 +414,13 @@ class AppiumWebAuditor:
                 return sizes;
             """)
             
+            # Analyze cookies
+            cookies = self.driver.get_cookies()
+            insecure_cookies = []
+            for cookie in cookies:
+                if not cookie.get('httpOnly', False) or not cookie.get('secure', False):
+                    insecure_cookies.append(cookie['name'])
+            
             return {
                 "performanceMetrics": {
                     "dns": performance_data.get('dns', 0),
@@ -379,7 +432,9 @@ class AppiumWebAuditor:
                     "totalSize": resource_data.get('total', 0),
                     "jsSize": resource_data.get('js', 0),
                     "cssSize": resource_data.get('css', 0),
-                    "imageSize": resource_data.get('img', 0)
+                    "imageSize": resource_data.get('img', 0),
+                    "cookieCount": len(cookies),
+                    "insecureCookies": len(insecure_cookies)
                 }
             }
         except Exception as e:
@@ -410,6 +465,14 @@ class AppiumWebAuditor:
                 nlp_insights["contentType"] = "content-heavy"
             if soup.find_all(['button', 'input']):
                 nlp_insights["userFlows"].append("interactive")
+                
+            # Detect modern web frameworks
+            if soup.find(attrs={"data-react-root": True}) or soup.find(id="root"):
+                nlp_insights["architecture"] = "React SPA"
+            elif soup.find(attrs={"ng-app": True}):
+                nlp_insights["architecture"] = "Angular Application"
+            elif soup.find(attrs={"data-vue": True}):
+                nlp_insights["architecture"] = "Vue.js Application"
                 
             # Extract key phrases (simplified)
             title_tag = soup.find('title')
@@ -449,11 +512,11 @@ class AppiumWebAuditor:
 
 def main():
     if len(sys.argv) < 4:
-        print("Usage: appium_analyzer.py <url> <session_id> <options>")
+        print("Usage: appium_analyzer.py <session_id> <url> <options>")
         sys.exit(1)
         
-    url = sys.argv[1]
-    session_id = sys.argv[2]
+    session_id = sys.argv[1]
+    url = sys.argv[2]
     options = json.loads(sys.argv[3])
     
     auditor = AppiumWebAuditor(session_id)
