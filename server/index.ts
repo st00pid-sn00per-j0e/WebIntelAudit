@@ -6,6 +6,9 @@ import rateLimit from 'express-rate-limit';
 // Initialize app first
 const app = express();
 
+// Trust proxy for rate limiting to work properly in Replit environment
+app.set('trust proxy', 1);
+
 const scanLimiter = rateLimit({
   windowMs: 5000, // 5 seconds
   max: 1, // limit each IP to 1 request per windowMs
